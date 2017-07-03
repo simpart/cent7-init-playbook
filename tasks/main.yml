@@ -1,0 +1,43 @@
+
+  - name: upgrade all packages
+    yum: name=*
+         state=latest
+  
+  - name: install the latest version of yum-cron
+    yum: name=yum-cron
+         state=latest
+  
+  - name: set yum-cron config
+    lineinfile: >
+        dest=/etc/yum/yum-cron.conf
+        state=present
+        backrefs=yes
+        regexp='^apply_updates = .*$'
+        line='apply_updates = yes'
+
+  - name: register yum-cron service and start
+    service: name=yum-cron
+             state=started
+             enabled=yes
+  
+  - name: install the latest version of for chrony time-sync
+    yum: name=chrony
+         state=latest
+  
+  - name: set chrony config
+    template: src=chrony.conf
+              dest=/etc/chrony.conf
+              mode=0755
+  
+  - name: register chrony service and start
+    service: name=chronyd
+             state=started
+             enabled=yes
+  
+  - name: set selinux config
+    template: src=selinux/config
+              dest=/etc/selinux/config
+              mode=0755
+  
+  - name: disabled selinux
+    command: shutdown -r 10
