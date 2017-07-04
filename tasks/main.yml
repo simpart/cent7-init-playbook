@@ -1,12 +1,32 @@
 
+  - name: check log directory
+    stat: path=/tmp/pb-init-cent7-log
+    register: logdir
+  
+  - name: create log directory
+    become: True
+    file: path=/tmp/pb-init-cent7-log
+          state=directory
+          owner=root
+          group=root
+          mode=0755
+    when: not logdir.stat.exists
+  
   - name: upgrade all packages
     yum: name=*
          state=latest
+
+
+  ### yum-cron setting  ###  
+  - name: check yum-cron flag
+    stat: path=/tmp/pb-init-cent7-log/yum-cron
+    register: yumcron_flag
   
   - name: install the latest version of yum-cron
     yum: name=yum-cron
          state=latest
-  
+    when: not yumcron_flag.stat.exists
+    
   - name: set yum-cron config
     lineinfile: >
         dest=/etc/yum/yum-cron.conf
@@ -20,24 +40,59 @@
              state=started
              enabled=yes
   
+  - name: create yum-cron flag
+    command: touch /tmp/pb-init-cent7-log/yum-cron
+    when: not yumcron_flag.stat.exists
+
+  
+  ### chrony setting ###
+  - name: check chrony flag
+    stat: path=/tmp/pb-init-cent7-log/chrony
+    register: chrony_flag
+  
   - name: install the latest version of for chrony time-sync
     yum: name=chrony
          state=latest
-  
+    when: not chrony_flag.stat.exists
+    
   - name: set chrony config
     template: src=chrony.conf
               dest=/etc/chrony.conf
               mode=0755
-  
+    when: not chrony_flag.stat.exists
+    
   - name: register chrony service and start
     service: name=chronyd
              state=started
              enabled=yes
-  
+    
+  - name: create chrony flag
+    command: touch /tmp/pb-init-cent7-log/chrony
+    when: not chrony_flag.stat.exists
+
+
+
+  - name: set hostname
+    hostname: name={{ hostname }}
+    when: hostname | default("") != ""
+
+  ### selinux setting ###
+  - name: check selinux flag
+    stat: path=/tmp/pb-init-cent7-log/selinux
+    register: selinux_flag
+
   - name: set selinux config
     template: src=selinux/config
               dest=/etc/selinux/config
               mode=0755
+    when: not selinux_flag.stat.exists
   
   - name: disabled selinux
     command: shutdown -r 10
+    when: not selinux_flag.stat.exists
+
+  - name: create selinux flag
+    command: touch /tmp/pb-init-cent7-log/selinux
+    when: not selinux_flag.stat.exists
+
+
