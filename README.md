@@ -1,2 +1,7 @@
-# cent7-init-playbook
-playbook initialization of centos 7
+# playbook for initializing centos7
+executing the following
+
+- update yum packages
+- start yum-cron
+- ntp setting
+- disabled selinux
